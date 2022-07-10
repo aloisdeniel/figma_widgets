@@ -62,7 +62,7 @@ jobs:
 
       - name: 🔧 [flutter_figma_editor] Build demo tests 
         working-directory: flutter_figma_editor
-        run: flutter build web
+        run: flutter build web --base-href /figma_widgets/
       
       - name: 🚀 [flutter_figma_editor] Deploy demo website 
         uses: JamesIves/github-pages-deploy-action@v4.3.3
