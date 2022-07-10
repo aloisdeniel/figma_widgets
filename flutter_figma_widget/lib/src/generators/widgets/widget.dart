@@ -9,6 +9,7 @@ import 'align.dart';
 import 'padding.dart';
 import 'positioned.dart';
 import 'sized_box.dart';
+import 'svg_picture.dart';
 import 'text.dart';
 import 'image.dart';
 import 'transform.dart';
@@ -30,6 +31,7 @@ class WidgetGenerator extends DartGenerator<Widget> {
     PositionedGenerator(),
     SizedBoxGenerator(),
     StackGenerator(),
+    SvgPictureGenerator(),
     TextGenerator(),
     TransformGenerator(),
   ];
@@ -61,6 +63,13 @@ class BuiltWidgetGenerator extends DartGenerator<Widget> {
       return const WidgetGenerator().toDart(
         // ignore: invalid_use_of_protected_member
         value.createState().build(context),
+        context,
+      );
+    }
+
+    if (value is InheritedWidget) {
+      return const WidgetGenerator().toDart(
+        value.child,
         context,
       );
     }

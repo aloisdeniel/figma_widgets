@@ -1,34 +1,31 @@
-import 'package:figma_widget_parser/figma_widget_parser.dart';
 import 'package:flutter/widgets.dart';
-
-import 'data_conversion/data_conversion.dart';
 
 class FigmaDecorated extends StatelessWidget {
   const FigmaDecorated({
     super.key,
-    required this.properties,
     required this.child,
+    this.cornerRadius = BorderRadius.zero,
+    this.fill = const <Decoration>[],
   });
 
-  final Map<String, Value?> properties;
+  final BorderRadius cornerRadius;
+  final List<Decoration> fill;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     Widget result = child;
 
-    final decorations = properties['fill'].asFillDecorations();
-    for (var decoration in decorations) {
+    for (var decoration in fill) {
       result = DecoratedBox(
         decoration: decoration,
         child: result,
       );
     }
 
-    final borderRadius = properties['cornerRadius'].asBorderRadius();
-    if (borderRadius != BorderRadius.zero) {
+    if (cornerRadius != BorderRadius.zero) {
       result = ClipRRect(
-        borderRadius: borderRadius,
+        borderRadius: cornerRadius,
         child: result,
       );
     }

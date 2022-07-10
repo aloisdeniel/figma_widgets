@@ -1,33 +1,28 @@
-import 'package:figma_widget_parser/figma_widget_parser.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_figma_widget/src/widgets/nodes/node.dart';
-import '../data_provider.dart';
-import 'data_conversion/data_conversion.dart';
 import 'decorated.dart';
 
 class FigmaFrame extends StatelessWidget {
   const FigmaFrame({
     super.key,
-    required this.node,
+    this.overflow = Clip.hardEdge,
+    this.children = const <Widget>[],
+    this.cornerRadius = BorderRadius.zero,
+    this.fill = const <Decoration>[],
   });
 
-  final TagNode node;
+  final Clip overflow;
+  final List<Widget> children;
+  final BorderRadius cornerRadius;
+  final List<Decoration> fill;
 
   @override
   Widget build(BuildContext context) {
-    final properties = context.resolveProperties(node);
-    final overflowClip = properties['overflow'].asOverflowClip();
     return FigmaDecorated(
-      properties: properties,
+      fill: fill,
+      cornerRadius: cornerRadius,
       child: Stack(
-        clipBehavior: overflowClip,
-        children: [
-          ...node.children.whereType<TagNode>().map(
-                (e) => FigmaFramePositioned(
-                  node: e,
-                ),
-              )
-        ],
+        clipBehavior: overflow,
+        children: children,
       ),
     );
   }
@@ -36,25 +31,23 @@ class FigmaFrame extends StatelessWidget {
 class FigmaFramePositioned extends StatelessWidget {
   const FigmaFramePositioned({
     super.key,
-    required this.node,
+    required this.x,
+    required this.y,
+    required this.child,
   });
 
-  final TagNode node;
+  final FigmaFrameConstraints x;
+  final FigmaFrameConstraints y;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final properties = context.resolveProperties(node);
-    final x = properties['x'];
-    final y = properties['y'];
+    Widget result = child;
 
-    Widget result = FigmaNode(
-      node: node,
-    );
-
-    x._mapX(
-      leftRight: (leftOffset, rightOffset) {
-        y._mapY(
-          topBottom: (topOffset, bottomOffset) {
+    x.map(
+      startEnd: (leftOffset, rightOffset) {
+        y.map(
+          startEnd: (topOffset, bottomOffset) {
             result = Positioned(
               left: leftOffset,
               right: rightOffset,
@@ -63,23 +56,30 @@ class FigmaFramePositioned extends StatelessWidget {
               child: result,
             );
           },
-          bottom: (bottomOffset) {
+          end: (bottomOffset, height) {
             result = Positioned(
               left: leftOffset,
               right: rightOffset,
               bottom: bottomOffset,
+              height: height,
               child: result,
             );
           },
-          top: (topOffset) {
+          start: (topOffset, height) {
             result = Positioned(
               left: leftOffset,
               right: rightOffset,
               top: topOffset,
+              height: height,
               child: result,
             );
           },
-          center: (yOffset) {
+          center: (yOffset, height) {
+            if (height != null) {
+              result = SizedBox(
+                height: height,
+              );
+            }
             if (yOffset != 0) {
               result = Transform.translate(
                 offset: Offset(0, yOffset),
@@ -100,31 +100,41 @@ class FigmaFramePositioned extends StatelessWidget {
           },
         );
       },
-      right: (rightOffset) {
-        y._mapY(
-          topBottom: (topOffset, bottomOffset) {
+      end: (rightOffset, width) {
+        y.map(
+          startEnd: (topOffset, bottomOffset) {
             result = Positioned(
               right: rightOffset,
               top: topOffset,
               bottom: bottomOffset,
+              width: width,
               child: result,
             );
           },
-          bottom: (bottomOffset) {
+          end: (bottomOffset, height) {
             result = Positioned(
               right: rightOffset,
               bottom: bottomOffset,
+              height: height,
+              width: width,
               child: result,
             );
           },
-          top: (topOffset) {
+          start: (topOffset, height) {
             result = Positioned(
               right: rightOffset,
               top: topOffset,
+              height: height,
+              width: width,
               child: result,
             );
           },
-          center: (yOffset) {
+          center: (yOffset, height) {
+            if (height != null) {
+              result = SizedBox(
+                height: height,
+              );
+            }
             if (yOffset != 0) {
               result = Transform.translate(
                 offset: Offset(0, yOffset),
@@ -143,37 +153,48 @@ class FigmaFramePositioned extends StatelessWidget {
           },
         );
       },
-      left: (leftOffset) {
-        y._mapY(
-          topBottom: (topOffset, bottomOffset) {
+      start: (leftOffset, width) {
+        y.map(
+          startEnd: (topOffset, bottomOffset) {
             result = Positioned(
               left: leftOffset,
               top: topOffset,
               bottom: bottomOffset,
+              width: width,
               child: result,
             );
           },
-          bottom: (bottomOffset) {
+          end: (bottomOffset, height) {
             result = Positioned(
               left: leftOffset,
               bottom: bottomOffset,
+              height: height,
+              width: width,
               child: result,
             );
           },
-          top: (topOffset) {
+          start: (topOffset, height) {
             result = Positioned(
               left: leftOffset,
               top: topOffset,
+              height: height,
+              width: width,
               child: result,
             );
           },
-          center: (yOffset) {
+          center: (yOffset, height) {
+            if (height != null) {
+              result = SizedBox(
+                height: height,
+              );
+            }
             if (yOffset != 0) {
               result = Transform.translate(
                 offset: Offset(0, yOffset),
                 child: result,
               );
             }
+
             result = Positioned(
               left: leftOffset,
               top: 0,
@@ -186,9 +207,14 @@ class FigmaFramePositioned extends StatelessWidget {
           },
         );
       },
-      center: (xOffset) {
-        y._mapY(
-          topBottom: (topOffset, bottomOffset) {
+      center: (xOffset, width) {
+        y.map(
+          startEnd: (topOffset, bottomOffset) {
+            if (width != null) {
+              result = SizedBox(
+                width: width,
+              );
+            }
             if (xOffset != 0) {
               result = Transform.translate(
                 offset: Offset(xOffset, 0),
@@ -205,7 +231,7 @@ class FigmaFramePositioned extends StatelessWidget {
               ),
             );
           },
-          bottom: (bottomOffset) {
+          end: (bottomOffset, height) {
             if (xOffset != 0) {
               result = Transform.translate(
                 offset: Offset(xOffset, 0),
@@ -214,13 +240,14 @@ class FigmaFramePositioned extends StatelessWidget {
             }
             result = Positioned(
               bottom: bottomOffset,
+              height: height,
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: result,
               ),
             );
           },
-          top: (topOffset) {
+          start: (topOffset, height) {
             if (xOffset != 0) {
               result = Transform.translate(
                 offset: Offset(xOffset, 0),
@@ -229,13 +256,20 @@ class FigmaFramePositioned extends StatelessWidget {
             }
             result = Positioned(
               top: topOffset,
+              height: height,
               child: Align(
                 alignment: Alignment.topCenter,
                 child: result,
               ),
             );
           },
-          center: (yOffset) {
+          center: (yOffset, height) {
+            if (height != null || width != null) {
+              result = SizedBox(
+                height: height,
+                width: width,
+              );
+            }
             if (yOffset != 0 || xOffset != 0) {
               result = Transform.translate(
                 offset: Offset(xOffset, yOffset),
@@ -257,82 +291,88 @@ class FigmaFramePositioned extends StatelessWidget {
   }
 }
 
-extension FramePositionExtension on Value? {
-  K _mapX<K>({
-    required K Function(double leftOffset, double rightOffset) leftRight,
-    required K Function(double offset) right,
-    required K Function(double offset) left,
-    required K Function(double offset) center,
+abstract class FigmaFrameConstraints {
+  const FigmaFrameConstraints();
+
+  const factory FigmaFrameConstraints.startEnd([
+    double startOffset,
+    double endOffset,
+  ]) = FigmaFrameStartEndConstraints;
+
+  const factory FigmaFrameConstraints.start([
+    double offset,
+    double? size,
+  ]) = FigmaFrameStartConstraints;
+
+  const factory FigmaFrameConstraints.end([
+    double offset,
+    double? size,
+  ]) = FigmaFrameEndConstraints;
+
+  const factory FigmaFrameConstraints.center([
+    double offset,
+    double? size,
+  ]) = FigmaFrameCenterConstraints;
+
+  K map<K>({
+    required K Function(double startOffset, double endOffset) startEnd,
+    required K Function(double offset, double? size) start,
+    required K Function(double offset, double? size) end,
+    required K Function(double offset, double? size) center,
   }) {
-    return map(
-      object: (items, orElse) {
-        final type = items['type'].asString();
-        switch (type) {
-          case 'left-right':
-            final leftOffset = items['leftOffset'].asDouble(0.0)!;
-            final rightOffset = items['rightOffset'].asDouble(0.0)!;
-            return leftRight(leftOffset, rightOffset);
-          case 'right':
-            final offset = items['offset'].asDouble(0.0)!;
-            return right(offset);
-          case 'left':
-            final offset = items['offset'].asDouble(0.0)!;
-            return left(offset);
-          case 'center':
-            final offset = items['offset'].asDouble(0.0)!;
-            return center(offset);
-          default:
-            return left(0.0);
-        }
-      },
-      primitive: (value, orElse) {
-        if (value is num) {
-          final leftOffset = value.toDouble();
-          return left(leftOffset);
-        }
+    final value = this;
+    if (value is FigmaFrameStartEndConstraints) {
+      return startEnd(value.startOffset, value.endOffset);
+    }
 
-        return left(0.0);
-      },
-      orElse: () => left(0.0),
-    );
+    if (value is FigmaFrameStartConstraints) {
+      return start(value.offset, value.size);
+    }
+
+    if (value is FigmaFrameEndConstraints) {
+      return end(value.offset, value.size);
+    }
+
+    if (value is FigmaFrameCenterConstraints) {
+      return center(value.offset, value.size);
+    }
+
+    throw Exception();
   }
+}
 
-  K _mapY<K>({
-    required K Function(double topOffset, double bottomOffset) topBottom,
-    required K Function(double offset) bottom,
-    required K Function(double offset) top,
-    required K Function(double offset) center,
-  }) {
-    return map(
-      object: (items, orElse) {
-        final type = items['type'].asString();
-        switch (type) {
-          case 'top-bottom':
-            final topOffset = items['topOffset'].asDouble(0.0)!;
-            final bottomOffset = items['bottomOffset'].asDouble(0.0)!;
-            return topBottom(topOffset, bottomOffset);
-          case 'bottom':
-            final offset = items['offset'].asDouble(0.0)!;
-            return bottom(offset);
-          case 'top':
-            final offset = items['offset'].asDouble(0.0)!;
-            return top(offset);
-          case 'center':
-            final offset = items['offset'].asDouble(0.0)!;
-            return center(offset);
-          default:
-            return top(0.0);
-        }
-      },
-      primitive: (value, orElse) {
-        if (value is num) {
-          final leftOffset = value.toDouble();
-          return top(leftOffset);
-        }
+class FigmaFrameStartEndConstraints extends FigmaFrameConstraints {
+  const FigmaFrameStartEndConstraints([
+    this.startOffset = 0.0,
+    this.endOffset = 0.0,
+  ]);
+  final double startOffset;
+  final double endOffset;
+}
 
-        return top(0.0);
-      },
-      orElse: () => top(0.0),
-    );
-  }
+class FigmaFrameStartConstraints extends FigmaFrameConstraints {
+  const FigmaFrameStartConstraints([
+    this.offset = 0.0,
+    this.size,
+  ]);
+  final double offset;
+  final double? size;
+}
+
+class FigmaFrameEndConstraints extends FigmaFrameConstraints {
+  const FigmaFrameEndConstraints([
+    this.offset = 0.0,
+    this.size,
+  ]);
+  final double offset;
+  final double? size;
+}
+
+class FigmaFrameCenterConstraints extends FigmaFrameConstraints {
+  const FigmaFrameCenterConstraints([
+    this.offset = 0.0,
+    this.size,
+  ]);
+  final double offset;
+  final double? size;
 }

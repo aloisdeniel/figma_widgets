@@ -1,54 +1,32 @@
-import 'package:figma_widget_parser/figma_widget_parser.dart';
 import 'package:flutter/widgets.dart';
-import '../data_provider.dart';
 import 'decorated.dart';
-import 'frame.dart';
-import 'node.dart';
-import 'data_conversion/data_conversion.dart';
 
 class FigmaAutoLayout extends StatelessWidget {
   const FigmaAutoLayout({
     super.key,
-    required this.node,
+    this.direction = Axis.horizontal,
+    this.overflow = Clip.hardEdge,
+    this.padding = EdgeInsets.zero,
+    this.spacing = 0.0,
+    this.crossAlignItems = CrossAxisAlignment.start,
+    this.autoChildren = const <Widget>[],
+    this.absoluteChildren = const <Widget>[],
+    this.cornerRadius = BorderRadius.zero,
+    this.fill = const <Decoration>[],
   });
 
-  final TagNode node;
+  final Axis direction;
+  final Clip overflow;
+  final EdgeInsets padding;
+  final double spacing;
+  final CrossAxisAlignment crossAlignItems;
+  final List<Widget> autoChildren;
+  final List<Widget> absoluteChildren;
+  final BorderRadius cornerRadius;
+  final List<Decoration> fill;
 
   @override
   Widget build(BuildContext context) {
-    final properties = context.resolveProperties(node);
-
-    final overflowClip = properties['overflow'].asOverflowClip();
-    final direction = properties['direction'].asAxis();
-    final padding = properties['padding'].asEdgeInsets();
-    final crossAxisAlignment =
-        properties[_alignProperty(direction)].asCrossAxisAlignment();
-    final spacing = properties['spacing'].asDouble();
-    final allChildren = node.children.whereType<TagNode>();
-    final autoChildren = allChildren
-        .where((child) {
-          final properties = context.resolveProperties(child);
-          return properties['positioning'].asString() != 'absolute';
-        })
-        .map(
-          (e) => FigmaAutoLayoutPositioned(
-            direction: direction,
-            node: e,
-          ),
-        )
-        .toList();
-    final absoluteChildren = allChildren
-        .where((child) {
-          final properties = context.resolveProperties(child);
-          return properties['positioning'].asString() == 'absolute';
-        })
-        .map(
-          (e) => FigmaFramePositioned(
-            node: e,
-          ),
-        )
-        .toList();
-
     final spacingWidget = () {
       if (spacing == 0) return null;
       switch (direction) {
@@ -61,7 +39,7 @@ class FigmaAutoLayout extends StatelessWidget {
 
     Widget result = Flex(
       direction: direction,
-      crossAxisAlignment: crossAxisAlignment,
+      crossAxisAlignment: crossAlignItems,
       mainAxisSize: MainAxisSize.min,
       children: [
         if (spacingWidget == null) ...autoChildren,
@@ -82,7 +60,7 @@ class FigmaAutoLayout extends StatelessWidget {
 
     if (absoluteChildren.isNotEmpty) {
       result = Stack(
-        clipBehavior: overflowClip,
+        clipBehavior: overflow,
         children: [
           result,
           ...absoluteChildren,
@@ -90,66 +68,114 @@ class FigmaAutoLayout extends StatelessWidget {
       );
     }
 
-    return FigmaDecorated(
-      properties: properties,
-      child: result,
+    return FigmaAutoLayoutDirection(
+      value: direction,
+      child: FigmaDecorated(
+        fill: fill,
+        cornerRadius: cornerRadius,
+        child: result,
+      ),
     );
+  }
+}
+
+class FigmaAutoLayoutDirection extends InheritedWidget {
+  const FigmaAutoLayoutDirection({
+    super.key,
+    required super.child,
+    required this.value,
+  });
+
+  final Axis value;
+
+  static Axis of(BuildContext context) {
+    return context
+            .dependOnInheritedWidgetOfExactType<FigmaAutoLayoutDirection>()
+            ?.value ??
+        Axis.vertical;
+  }
+
+  @override
+  bool updateShouldNotify(covariant FigmaAutoLayoutDirection oldWidget) {
+    return oldWidget.value != value;
   }
 }
 
 class FigmaAutoLayoutPositioned extends StatelessWidget {
   const FigmaAutoLayoutPositioned({
     super.key,
-    required this.direction,
-    required this.node,
+    required this.width,
+    required this.height,
+    required this.child,
+    this.direction,
   });
 
-  final Axis direction;
-  final TagNode node;
+  final Axis? direction;
+  final FigmaAutoConstraints width;
+  final FigmaAutoConstraints height;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final properties = context.resolveProperties(node);
-    final width = properties['width'];
-    final height = properties['height'];
-
-    Widget result = FigmaNode(
-      node: node,
-    );
-
+    final direction = this.direction ?? FigmaAutoLayoutDirection.of(context);
+    var result = child;
     switch (direction) {
       case Axis.vertical:
 
         /// Cross fit
         result = SizedBox(
-          width: width.asFillParent() ? double.infinity : width.asDouble(null),
-          height: height.asDouble(null),
+          width: width.map(
+            fillParent: () => double.infinity,
+            hugContents: () => null,
+            fixedSize: (size) => size,
+          ),
+          height: height.map(
+            fillParent: () => double.infinity,
+            hugContents: () => null,
+            fixedSize: (size) => size,
+          ),
           child: result,
         );
 
         /// Main fit
-        if (height.asFillParent()) {
-          result = Expanded(
-            child: result,
-          );
-        } else {}
+        height.map(
+          hugContents: () {},
+          fixedSize: (size) {},
+          fillParent: () {
+            result = Expanded(
+              child: result,
+            );
+          },
+        );
+
         break;
       case Axis.horizontal:
 
         /// Cross fit
         result = SizedBox(
-          width: width.asDouble(null),
-          height:
-              height.asFillParent() ? double.infinity : height.asDouble(null),
+          height: height.map(
+            fillParent: () => double.infinity,
+            hugContents: () => null,
+            fixedSize: (size) => size,
+          ),
+          width: width.map(
+            fillParent: () => double.infinity,
+            hugContents: () => null,
+            fixedSize: (size) => size,
+          ),
           child: result,
         );
 
         /// Main fit
-        if (width.asFillParent()) {
-          result = Expanded(
-            child: result,
-          );
-        }
+        width.map(
+          hugContents: () {},
+          fixedSize: (size) {},
+          fillParent: () {
+            result = Expanded(
+              child: result,
+            );
+          },
+        );
         break;
     }
 
@@ -157,11 +183,50 @@ class FigmaAutoLayoutPositioned extends StatelessWidget {
   }
 }
 
-String _alignProperty(Axis direction) {
-  switch (direction) {
-    case Axis.vertical:
-      return 'horizontalAlignItems';
-    case Axis.horizontal:
-      return 'verticalAlignItems';
+abstract class FigmaAutoConstraints {
+  const FigmaAutoConstraints();
+
+  const factory FigmaAutoConstraints.fillParent() = FigmaFillParentConstraints;
+
+  const factory FigmaAutoConstraints.hugContents() =
+      FigmaHugContentsConstraints;
+
+  const factory FigmaAutoConstraints.fixedSize(
+    double size,
+  ) = FigmaFixedSizeConstraints;
+
+  K map<K>({
+    required K Function() fillParent,
+    required K Function() hugContents,
+    required K Function(double size) fixedSize,
+  }) {
+    final value = this;
+    if (value is FigmaFillParentConstraints) {
+      return fillParent();
+    }
+
+    if (value is FigmaHugContentsConstraints) {
+      return hugContents();
+    }
+
+    if (value is FigmaFixedSizeConstraints) {
+      return fixedSize(value.size);
+    }
+
+    throw Exception();
   }
+}
+
+class FigmaFillParentConstraints extends FigmaAutoConstraints {
+  const FigmaFillParentConstraints();
+}
+
+class FigmaHugContentsConstraints extends FigmaAutoConstraints {
+  const FigmaHugContentsConstraints();
+}
+
+class FigmaFixedSizeConstraints extends FigmaAutoConstraints {
+  const FigmaFixedSizeConstraints(this.size);
+
+  final double size;
 }

@@ -15,6 +15,7 @@ class ImageGenerator extends DartGenerator<Image> {
 
     if (value.width != null) result.write("width: ${value.width},");
     if (value.height != null) result.write("height: ${value.height},");
+    if (value.fit != BoxFit.contain) result.write("fit: ${value.fit},");
 
     result.write(")");
     return result.toString();

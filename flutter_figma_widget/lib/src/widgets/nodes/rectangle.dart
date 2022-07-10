@@ -1,21 +1,21 @@
-import 'package:figma_widget_parser/figma_widget_parser.dart';
 import 'package:flutter/widgets.dart';
-import '../data_provider.dart';
 import 'decorated.dart';
 
 class FigmaRectangle extends StatelessWidget {
   const FigmaRectangle({
     super.key,
-    required this.node,
+    this.cornerRadius = BorderRadius.zero,
+    this.fill = const <Decoration>[],
   });
 
-  final TagNode node;
+  final BorderRadius cornerRadius;
+  final List<Decoration> fill;
 
   @override
   Widget build(BuildContext context) {
-    final properties = context.resolveProperties(node);
     return FigmaDecorated(
-      properties: properties,
+      fill: fill,
+      cornerRadius: cornerRadius,
       child: const SizedBox(),
     );
   }
