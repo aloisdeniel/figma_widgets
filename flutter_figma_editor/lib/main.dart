@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_figma_editor/src/output.dart';
 import 'package:flutter_figma_widget/flutter_figma_widget.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'src/input/input.dart';
 import 'src/preview.dart';

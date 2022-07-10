@@ -92,6 +92,7 @@ class FigmaFramePositioned extends StatelessWidget {
               top: 0,
               bottom: 0,
               child: Align(
+                // ignore: todo
                 alignment: Alignment.center, // TODO only vertical
                 child: result,
               ),
@@ -198,6 +199,7 @@ class FigmaFramePositioned extends StatelessWidget {
               top: topOffset,
               bottom: bottomOffset,
               child: Align(
+                // ignore: todo
                 alignment: Alignment.center, // TODO only horizontal
                 child: result,
               ),

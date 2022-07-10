@@ -44,7 +44,7 @@ jobs:
 
       - name: 📊 [flutter_figma_widget] Analyze 
         working-directory: flutter_figma_widget
-        run: flutter analyze lib test example
+        run: flutter analyze lib example
 
       # flutter_figma_editor
 
@@ -58,7 +58,7 @@ jobs:
 
       - name: 📊 [flutter_figma_editor] Analyze 
         working-directory: flutter_figma_editor
-        run: flutter analyze lib test example
+        run: flutter analyze lib
 
       - name: 🔧 [flutter_figma_editor] Build demo tests 
         working-directory: flutter_figma_editor
