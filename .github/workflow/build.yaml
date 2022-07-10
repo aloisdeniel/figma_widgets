@@ -1,0 +1,72 @@
+name: publish
+
+on:
+  push:
+    branches:
+      - develop
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: subosito/flutter-action@v1.5.3
+        with:
+          flutter-version: '2.10.5'
+          channel: 'stable'
+
+      # figma_widget_parser
+
+      - name: 📦 [figma_widget_parser] Install Dependencies 
+        working-directory: figma_widget_parser
+        run: flutter packages get
+
+      - name: 🧹 [figma_widget_parser] Format 
+        working-directory: figma_widget_parser
+        run: flutter format --set-exit-if-changed .
+
+      - name: 📊 [figma_widget_parser] Analyze 
+        working-directory: figma_widget_parser
+        run: flutter analyze lib test example
+
+      - name: 🧪 [figma_widget_parser] Run tests 
+        working-directory: figma_widget_parser
+        run: flutter test --no-pub
+
+      # flutter_figma_widget
+
+      - name: 📦 [flutter_figma_widget] Install Dependencies 
+        working-directory: flutter_figma_widget
+        run: flutter packages get
+
+      - name: 🧹 [flutter_figma_widget] Format 
+        working-directory: flutter_figma_widget
+        run: flutter format --set-exit-if-changed .
+
+      - name: 📊 [flutter_figma_widget] Analyze 
+        working-directory: flutter_figma_widget
+        run: flutter analyze lib test example
+
+      # flutter_figma_editor
+
+      - name: 📦 [flutter_figma_editor] Install Dependencies 
+        working-directory: flutter_figma_editor
+        run: flutter packages get
+
+      - name: 🧹 [flutter_figma_editor] Format 
+        working-directory: flutter_figma_editor
+        run: flutter format --set-exit-if-changed .
+
+      - name: 📊 [flutter_figma_editor] Analyze 
+        working-directory: flutter_figma_editor
+        run: flutter analyze lib test example
+
+      - name: 🔧 [flutter_figma_editor] Build demo tests 
+        working-directory: flutter_figma_editor
+        run: flutter build web
+      
+      - name: 🚀 [flutter_figma_editor] Deploy demo website 
+        uses: JamesIves/github-pages-deploy-action@v4.3.3
+        with:
+          branch: gh-pages 
+          folder: flutter_figma_editor/build/web/
